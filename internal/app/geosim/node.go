@@ -3,6 +3,8 @@ package geosim
 import (
 	"fmt"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -108,30 +110,65 @@ func (n *NodeMesh) SetHeight(x, y, height int) error {
 	if y-1 > len(n.nodeMesh) || y-1 < 0 || x-1 > len(n.nodeMesh[y]) || x-1 < 0 || height < -127 || height > 127 {
 		return fmt.Errorf("invalid value")
 	}
-	n.nodeMesh[y][x].Height = height
+
+	node := n.nodeMesh[y][x]
+	node.Height = height
+
+	var eval func(*Node) bool
+	var action func(*Node)
+
+	if node.Height > node.Prev.Height {
+		eval = func(node *Node) bool {
+			return node.Prev != nil && node.Height > node.Prev.Height
+		}
+		action = moveNodeBack
+	} else if node.Height < node.Next.Height {
+		eval = func(node *Node) bool {
+			return node.Next != nil && node.Height < node.Next.Height
+		}
+		action = moveNodeForward
+	}
 
 	i := 0
-	for n.nodeMesh[y][x].Prev != nil && n.nodeMesh[y][x].Height > n.nodeMesh[y][x].Prev.Height {
-		node := n.nodeMesh[y][x]
-		prev := node.Prev
-		prev.Next = node.Next
-		node.Next = prev
-		node.Prev = prev.Prev
-		prev.Prev = node
+	for eval(node) {
+		action(node)
 		i++
 	}
-	fmt.Println("moved: ", i)
+	logrus.Debug("moved: ", i)
 
 	for n.MaxSortedHeight.Prev != nil {
-		fmt.Println("mxsh moving", n.MaxSortedHeight.Height)
+		logrus.Debug("mxsh moving", n.MaxSortedHeight.Height)
 		n.MaxSortedHeight = n.MaxSortedHeight.Prev
 	}
 	for n.MinSortedHeight.Next != nil {
-		fmt.Println("mnsh moving", n.MaxSortedHeight.Height)
+		logrus.Debug("mnsh moving", n.MaxSortedHeight.Height)
 		n.MinSortedHeight = n.MinSortedHeight.Next
 	}
-	fmt.Printf("%v", time.Since(start))
+	logrus.Debugf("%v", time.Since(start))
 	return nil
+}
+
+func moveNodeBack(node *Node) {
+	if node.Prev == nil {
+		return
+	}
+	prev := node.Prev
+	prev.Next = node.Next
+	node.Next = prev
+	node.Prev = prev.Prev
+	prev.Prev = node
+}
+
+func moveNodeForward(node *Node) {
+	if node.Next == nil {
+		return
+	}
+
+	next := node.Next
+	next.Prev = node.Prev
+	node.Prev = next
+	node.Next = next.Next
+	next.Next = node
 }
 
 func (n *NodeMesh) Meh() {

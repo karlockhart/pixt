@@ -10,4 +10,5 @@ require (
 	github.com/go-gl/glfw v0.0.0-20190409004039-e6da0acd62b1 // indirect
 	github.com/go-gl/mathgl v0.0.0-20190713194549-592312d8590a // indirect
 	github.com/pkg/errors v0.8.1 // indirect
+	github.com/sirupsen/logrus v1.4.2
 )
