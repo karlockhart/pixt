@@ -33,7 +33,7 @@ type Node struct {
 	Height   int
 }
 
-// NodeMesh is
+// NodeMesh is a linked 2d collection of nodes
 type NodeMesh struct {
 	MaxSortedHeight *Node
 	MinSortedHeight *Node
@@ -47,7 +47,7 @@ func newNode() *Node {
 	return &n
 }
 
-// NewNodeMesh is
+// NewNodeMesh creates a new x,y sized NodeMesh
 func NewNodeMesh(x, y int) *NodeMesh {
 	n := NodeMesh{}
 	n.nodeMesh = make([][]*Node, y)
@@ -106,7 +106,7 @@ func NewNodeMesh(x, y int) *NodeMesh {
 	return &n
 }
 
-//SetHeight is
+//SetHeight sets the height of a node, heightsorted list is reordered
 func (n *NodeMesh) SetHeight(x, y, height int) error {
 	start := time.Now()
 	if y-1 > len(n.nodeMesh) || y-1 < 0 || x-1 > len(n.nodeMesh[y]) || x-1 < 0 || height < -127 || height > 127 {
@@ -139,11 +139,11 @@ func (n *NodeMesh) SetHeight(x, y, height int) error {
 	logrus.Debugf("moved node %d entries using %v", i, runtime.FuncForPC(reflect.ValueOf(action).Pointer()).Name())
 
 	for n.MaxSortedHeight.Prev != nil {
-		logrus.Debug("mxsh moving", n.MaxSortedHeight.Height)
+		logrus.Debug("mxsh moving, was: ", n.MaxSortedHeight.Height)
 		n.MaxSortedHeight = n.MaxSortedHeight.Prev
 	}
 	for n.MinSortedHeight.Next != nil {
-		logrus.Debug("mnsh moving", n.MaxSortedHeight.Height)
+		logrus.Debug("mnsh moving, was: ", n.MaxSortedHeight.Height)
 		n.MinSortedHeight = n.MinSortedHeight.Next
 	}
 	logrus.Debugf("%v", time.Since(start))
@@ -170,8 +170,4 @@ func moveNodeForward(node *Node) {
 	node.Prev = next
 	node.Next = next.Next
 	next.Next = node
-}
-
-func (n *NodeMesh) Meh() {
-	fmt.Println("Meh")
 }
