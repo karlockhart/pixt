@@ -2,6 +2,8 @@ package geosim
 
 import (
 	"fmt"
+	"reflect"
+	"runtime"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -117,12 +119,12 @@ func (n *NodeMesh) SetHeight(x, y, height int) error {
 	var eval func(*Node) bool
 	var action func(*Node)
 
-	if node.Height > node.Prev.Height {
+	if node.Prev != nil && node.Height > node.Prev.Height {
 		eval = func(node *Node) bool {
 			return node.Prev != nil && node.Height > node.Prev.Height
 		}
 		action = moveNodeBack
-	} else if node.Height < node.Next.Height {
+	} else if node.Next != nil && node.Height < node.Next.Height {
 		eval = func(node *Node) bool {
 			return node.Next != nil && node.Height < node.Next.Height
 		}
@@ -134,7 +136,7 @@ func (n *NodeMesh) SetHeight(x, y, height int) error {
 		action(node)
 		i++
 	}
-	logrus.Debug("moved: ", i)
+	logrus.Debugf("moved node %d entries using %v", i, runtime.FuncForPC(reflect.ValueOf(action).Pointer()).Name())
 
 	for n.MaxSortedHeight.Prev != nil {
 		logrus.Debug("mxsh moving", n.MaxSortedHeight.Height)
@@ -163,7 +165,6 @@ func moveNodeForward(node *Node) {
 	if node.Next == nil {
 		return
 	}
-
 	next := node.Next
 	next.Prev = node.Prev
 	node.Prev = next

@@ -21,6 +21,11 @@ func run() {
 	if err != nil {
 		logrus.Error(err)
 	}
+
+	err = nm.SetHeight(400, 600, 90)
+	if err != nil {
+		logrus.Error(err)
+	}
 	fmt.Println(nm.MaxSortedHeight.Height)
 
 	cfg := pixelgl.WindowConfig{
