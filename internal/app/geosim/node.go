@@ -31,6 +31,8 @@ type Node struct {
 	Next     *Node
 	Prev     *Node
 	Height   int
+	Stack    []Substrate
+	Receive  <-chan Fluid
 }
 
 // NodeMesh is a linked 2d collection of nodes
@@ -42,9 +44,20 @@ type NodeMesh struct {
 
 func newNode() *Node {
 	n := Node{}
-	n.Height = MinHeight
 	n.Neighbor = make([]*Node, 8)
+	n.Receive = make(chan Fluid)
+
+	go func() {
+		for fluid := range n.Receive {
+			fluid.Flow(n.Stack, n.Neighbor)
+		}
+	}()
+
 	return &n
+}
+
+func (n *Node) Height() int {
+	return len(n.Stack)
 }
 
 // NewNodeMesh creates a new x,y sized NodeMesh
